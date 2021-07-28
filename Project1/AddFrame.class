@@ -1,0 +1,133 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import org.hibernate.*;
+import org.hibernate.cfg.*;
+
+class AddFrame extends JFrame {
+Container c;
+JLabel lblId, lblName, lblSalary;
+JTextField txtId, txtName, txtSalary;
+JButton btnSave, btnBack;
+int id;
+String name;
+double salary;
+
+
+AddFrame() {
+c = getContentPane();
+c.setLayout(new FlowLayout());
+lblId = new JLabel("Enter ID : ");
+lblName = new JLabel("Enter Name : ");
+lblSalary = new JLabel("Enter Salary : ");
+txtId = new JTextField(20);
+txtName = new JTextField(20);
+txtSalary = new JTextField(20);
+btnSave = new JButton("Save");
+btnBack = new JButton("Back");
+
+c.add(lblId);
+c.add(txtId);
+c.add(lblName);
+c.add(txtName);
+c.add(lblSalary);
+c.add(txtSalary);
+c.add(btnSave);
+c.add(btnBack);
+
+btnBack.addActionListener(new ActionListener() {
+public void actionPerformed(ActionEvent ae) {
+MainFrame a = new MainFrame();
+dispose();
+}
+});
+
+btnSave.addActionListener(new ActionListener() {
+public void actionPerformed(ActionEvent ae) {
+
+Configuration cfg = new Configuration();
+cfg.configure("hibernate.cfg.xml");
+
+SessionFactory sfact = cfg.buildSessionFactory();
+Session session = sfact.openSession();
+
+Transaction t = null;
+
+try{
+t = session.beginTransaction();
+Employee e = new Employee();
+
+try {
+id = Integer.parseInt(txtId.getText());
+if(id<0) {
+	throw new Exception();
+}
+}
+catch(NumberFormatException nfe) {
+JOptionPane.showMessageDialog(new JDialog(),"Please Enter Only Integer");
+return;
+}
+catch(Exception ie) {
+JOptionPane.showMessageDialog(new JDialog(), "Please Enter Only Positive Integer");
+return;
+}
+try{
+name = txtName.getText();
+if(name.contains(".*\\d+.*"))
+	throw new NullPointerException();
+if(name.length() < 2)
+	throw new IllegalAccessException();
+}
+catch(NullPointerException npe){
+JOptionPane.showMessageDialog(new JDialog(),"Name should only include Alphabets");
+return;
+}
+catch(IllegalAccessException iae) {
+JOptionPane.showMessageDialog(new JDialog(),"Name should contain at least two letters");
+return;
+}
+
+try {
+salary = Double.parseDouble(txtSalary.getText());
+if (salary < 8000.0)
+	throw new NullPointerException();
+}
+catch(NullPointerException npe) {
+JOptionPane.showMessageDialog(new JDialog(),"Minimum Salary Should Be 8000");
+return;
+}
+catch(NumberFormatException nfe) {
+JOptionPane.showMessageDialog(new JDialog(),"Please Enter Valid Salary");
+return;
+}
+
+e.setid(id);
+e.setName(name);
+e.setSalary(salary);
+session.save(e);
+t.commit();
+JOptionPane.showMessageDialog(new JDialog(), "Record Saved");
+
+}
+catch(org.hibernate.exception.ConstraintViolationException cve) {
+JOptionPane.showMessageDialog(new JDialog(), "Record Already Exists, Please Use Different ID");
+}
+catch(Exception e) {
+t.rollback();
+JOptionPane.showMessageDialog(new JDialog(), "Error : " + e);
+}
+finally {
+session.close();
+}
+}
+});
+
+
+setTitle("Add Employee");
+setSize(350, 400);
+setLocationRelativeTo(null);
+setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+setVisible(true);
+}
+}
